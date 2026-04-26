@@ -4,7 +4,6 @@ import google.generativeai as genai
 from telegram import Bot
 import asyncio
 
-# Переменные из секретов
 TELEGRAM_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
 GEMINI_KEY = os.environ['GEMINI_API_KEY']
@@ -13,7 +12,6 @@ RSS_FEED = os.environ.get('RSS_FEED', 'https://decrypt.co/feed')
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-pro')
 
-# Маскируемся под браузер
 feedparser.USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
 
 async def main():
@@ -24,14 +22,13 @@ async def main():
 
     entries = feed.entries[:5]
     if not entries:
-        # Попробуем запасной источник
         print("Первичный источник не дал новостей, пробую запасной...")
         feed = feedparser.parse('https://cointelegraph.com/rss')
         print(f"Cointelegraph найдено: {len(feed.entries)}")
         entries = feed.entries[:5]
 
     if not entries:
-        print("Новостей нет ни в одном источнике. Завершение.")
+        print("Нет новостей ни в одном источнике. Завершение.")
         return
 
     headlines = "\n".join([f"- {e.title}" for e in entries])
@@ -46,7 +43,7 @@ async def main():
         post_text = response.text
     except Exception as e:
         print(f"Ошибка Gemini: {e}")
-        post_text = " Свежие новости криптомира:\n\n" + headlines
+        post_text = "🔥 Свежие новости криптомира:\n\n" + headlines
 
     bot = Bot(token=TELEGRAM_TOKEN)
     await bot.send_message(chat_id=CHAT_ID, text=post_text, parse_mode='HTML')
