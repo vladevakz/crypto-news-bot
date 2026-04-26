@@ -8,7 +8,7 @@ import asyncio
 TELEGRAM_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
 GEMINI_KEY = os.environ['GEMINI_API_KEY']
-RSS_FEED = os.environ.get('RSS_FEED', 'https://www.coindesk.com/arc/outboundfeeds/rss/')
+RSS_FEED = os.environ.get('RSS_FEED', 'https://cointelegraph.com/rss')
 
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-pro')
