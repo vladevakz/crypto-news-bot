@@ -15,6 +15,7 @@ model = genai.GenerativeModel('gemini-pro')
 
 async def main():
     # Парсим RSS
+    feedparser.USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
     feed = feedparser.parse(RSS_FEED)
     entries = feed.entries[:5]  # берём 5 свежих новостей
 
