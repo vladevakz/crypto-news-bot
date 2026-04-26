@@ -4,29 +4,37 @@ import google.generativeai as genai
 from telegram import Bot
 import asyncio
 
-# Получение переменных из секретов GitHub
+# Переменные из секретов
 TELEGRAM_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
 GEMINI_KEY = os.environ['GEMINI_API_KEY']
-RSS_FEED = os.environ.get('RSS_FEED', 'https://cointelegraph.com/rss')
+RSS_FEED = os.environ.get('RSS_FEED', 'https://decrypt.co/feed')
 
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-pro')
 
+# Маскируемся под браузер
+feedparser.USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+
 async def main():
-    # Парсим RSS
-    feedparser.USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
     feed = feedparser.parse(RSS_FEED)
-    entries = feed.entries[:5]  # берём 5 свежих новостей
+    print(f"Статус HTTP: {feed.status}")
+    print(f"Заголовок ответа: {feed.headers.get('content-type', 'нет')}")
+    print(f"Найдено новостей: {len(feed.entries)}")
+
+    entries = feed.entries[:5]
+    if not entries:
+        # Попробуем запасной источник
+        print("Первичный источник не дал новостей, пробую запасной...")
+        feed = feedparser.parse('https://cointelegraph.com/rss')
+        print(f"Cointelegraph найдено: {len(feed.entries)}")
+        entries = feed.entries[:5]
 
     if not entries:
-        print("Нет новостей")
+        print("Новостей нет ни в одном источнике. Завершение.")
         return
 
-    # Формируем список заголовков
     headlines = "\n".join([f"- {e.title}" for e in entries])
-
-    # Просим ИИ красиво оформить
     prompt = (
         "Ты — редактор крипто-новостей. Сделай из этих заголовков привлекательный "
         "пост для Telegram. Используй эмодзи, разбивай на абзацы, сохраняй смысл. "
@@ -38,12 +46,11 @@ async def main():
         post_text = response.text
     except Exception as e:
         print(f"Ошибка Gemini: {e}")
-        # Если ИИ не сработал, отправляем просто заголовки
-        post_text = "🔥 Свежие новости криптомира:\n\n" + headlines
+        post_text = " Свежие новости криптомира:\n\n" + headlines
 
-    # Отправляем в канал
     bot = Bot(token=TELEGRAM_TOKEN)
     await bot.send_message(chat_id=CHAT_ID, text=post_text, parse_mode='HTML')
+    print("Сообщение отправлено в канал.")
 
 if __name__ == '__main__':
     asyncio.run(main())
